@@ -95,7 +95,7 @@ bool VulkanRenderer::create_descriptors(){
  VkDescriptorBufferInfo cb{camera_buffer_,0,sizeof(CameraData)},lb{light_buffer_,0,sizeof(LightData)},xb{cluster_buffer_,0,VK_WHOLE_SIZE},tb{tile_depth_buffer_,0,VK_WHOLE_SIZE};VkDescriptorImageInfo shadow{shadow_sampler_,shadow_view_,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},depth{depth_sampler_,depth_view_,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
  VkWriteDescriptorSet w[6]{};for(auto&x:w)x.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;w[0].dstSet=camera_set_;w[0].dstBinding=0;w[0].descriptorType=VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;w[0].descriptorCount=1;w[0].pBufferInfo=&cb;w[1].dstSet=lighting_set_;w[1].dstBinding=0;w[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;w[1].descriptorCount=1;w[1].pBufferInfo=&lb;w[2].dstSet=lighting_set_;w[2].dstBinding=1;w[2].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;w[2].descriptorCount=1;w[2].pBufferInfo=&xb;w[3].dstSet=lighting_set_;w[3].dstBinding=2;w[3].descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;w[3].descriptorCount=1;w[3].pImageInfo=&shadow;w[4].dstSet=lighting_set_;w[4].dstBinding=3;w[4].descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;w[4].descriptorCount=1;w[4].pImageInfo=&depth;w[5].dstSet=lighting_set_;w[5].dstBinding=4;w[5].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;w[5].descriptorCount=1;w[5].pBufferInfo=&tb;vkUpdateDescriptorSets(device_,6,w,0,nullptr);return true;
 }
-bool VulkanRenderer::create_pipelinesbool VulkanRenderer::create_pipelines(){
+bool VulkanRenderer::create_pipelines(){
  VkDescriptorSetLayout ls[]={camera_set_layout_,lighting_set_layout_};VkPushConstantRange pcr{VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT|VK_SHADER_STAGE_COMPUTE_BIT,0,4};VkPipelineLayoutCreateInfo pl{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};pl.setLayoutCount=2;pl.pSetLayouts=ls;pl.pushConstantRangeCount=1;pl.pPushConstantRanges=&pcr;if(vkCreatePipelineLayout(device_,&pl,nullptr,&pipeline_layout_)!=VK_SUCCESS)return false;
  VkShaderModule vs=shader(device_,aether_shader_spv::vert,aether_shader_spv::vert_words),fs=shader(device_,aether_shader_spv::frag,aether_shader_spv::frag_words),cs=shader(device_,aether_shader_spv::comp,aether_shader_spv::comp_words);if(!vs||!fs||!cs)return false;
  VkPipelineShaderStageCreateInfo st[2]{};for(auto&x:st)x.sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;st[0].stage=VK_SHADER_STAGE_VERTEX_BIT;st[0].module=vs;st[0].pName="main";st[1].stage=VK_SHADER_STAGE_FRAGMENT_BIT;st[1].module=fs;st[1].pName="main";
@@ -109,7 +109,7 @@ bool VulkanRenderer::create_pipelinesbool VulkanRenderer::create_pipelines(){
  VkPipelineShaderStageCreateInfo csx{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};csx.stage=VK_SHADER_STAGE_COMPUTE_BIT;csx.module=cs;csx.pName="main";VkComputePipelineCreateInfo cp{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};cp.stage=csx;cp.layout=pipeline_layout_;if(vkCreateComputePipelines(device_,VK_NULL_HANDLE,1,&cp,nullptr,&compute_pipeline_)!=VK_SUCCESS)return false;
  vkDestroyShaderModule(device_,vs,nullptr);vkDestroyShaderModule(device_,fs,nullptr);vkDestroyShaderModule(device_,cs,nullptr);return true;
 }
-bool VulkanRenderer::create_shadow_resourcesbool VulkanRenderer::create_shadow_resources(){
+bool VulkanRenderer::create_shadow_resources(){
  const uint32_t S=1024;VkFormat candidates[]={VK_FORMAT_D16_UNORM,VK_FORMAT_D32_SFLOAT};shadow_format_=VK_FORMAT_UNDEFINED;
  for(VkFormat f:candidates){VkFormatProperties p{};vkGetPhysicalDeviceFormatProperties(gpu_,f,&p);VkFormatFeatureFlags need=VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;if((p.optimalTilingFeatures&need)==need){shadow_format_=f;break;}}
  if(shadow_format_==VK_FORMAT_UNDEFINED)return false;
@@ -128,7 +128,7 @@ bool VulkanRenderer::create_forward_plus_resources(){
  if(!create_buffer(sizeof(CameraData),VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,camera_buffer_,camera_memory_))return false;if(!create_buffer(sizeof(LightData),VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,light_buffer_,light_memory_))return false;if(!create_buffer(clusterBytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_DST_BIT,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,cluster_buffer_,cluster_memory_))return false;if(!create_buffer(tileDepthBytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,tile_depth_buffer_,tile_depth_memory_))return false;
  if(vkMapMemory(device_,camera_memory_,0,sizeof(CameraData),0,&camera_mapped_)!=VK_SUCCESS)return false;if(vkMapMemory(device_,light_memory_,0,sizeof(LightData),0,&light_mapped_)!=VK_SUCCESS)return false;update_lights();return create_mesh()&&create_shadow_resources()&&create_descriptors()&&create_pipelines();
 }
-bool VulkanRenderer::initbool VulkanRenderer::init(){if(!create_instance())return false;initialized_=true;return true;}
+bool VulkanRenderer::init(){if(!create_instance())return false;initialized_=true;return true;}
 void VulkanRenderer::destroy_swapchain(){
  if(!device_)return;
  if(camera_mapped_){vkUnmapMemory(device_,camera_memory_);camera_mapped_=nullptr;}
