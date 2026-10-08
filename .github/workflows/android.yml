@@ -24,8 +24,18 @@ jobs:
           packages: platform-tools
       - name: Install Android toolchain
         run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.31.6"
+      - name: Compile Vulkan shaders
+        run: |
+          mkdir -p app/src/main/shaders
+          glslangValidator -V app/src/main/shaders/aether.vert -o app/src/main/shaders/aether.vert.spv
+          glslangValidator -V app/src/main/shaders/aether.frag -o app/src/main/shaders/aether.frag.spv
+          glslangValidator -V app/src/main/shaders/aether.comp -o app/src/main/shaders/aether.comp.spv
+          python3 tools/generate_spirv_header.py
+          test -s app/src/main/cpp/generated/shaders_spv.h
       - name: Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
