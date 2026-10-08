@@ -46,3 +46,13 @@ The engine will keep rendering and editor state separate so the same scene can r
 ## License
 
 MIT
+
+
+## Vulkan Forward+ + Kenney World
+
+Aether 3D's Android renderer follows the Forward+ structure used by the referenced Vulkan project: depth pre-pass, depth-aware tile/cluster light culling, then final forward shading. The mobile path keeps the same architecture while using a 32x32 tile and 24 logarithmic depth slices.
+
+The showcase world is built from a verified subset of **Kenney Nature Kit 2.1** (trees, rocks, bushes, grass, flowers, mushrooms and logs). CI downloads the official CC0 archive, verifies its SHA-256, and bakes the selected GLB geometry into the native Vulkan mesh before the APK build.
+
+- Kenney Nature Kit: https://kenney.nl/assets/nature-kit
+- Forward+ reference: https://github.com/zimengyang/ForwardPlus_Vulkan
