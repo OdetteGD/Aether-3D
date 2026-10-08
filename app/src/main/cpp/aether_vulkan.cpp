@@ -120,13 +120,13 @@ void VulkanRenderer::set_window(ANativeWindow*w){if(w==window_&&swapchain_)retur
 void VulkanRenderer::resize(uint32_t w,uint32_t h){width_=std::max(1u,w);height_=std::max(1u,h);dirty_=true;}
 void VulkanRenderer::recreate_swapchain(){if(!device_||!surface_)return;vkDeviceWaitIdle(device_);destroy_swapchain();if(create_swapchain()&&create_render_targets()&&create_forward_plus_resources())dirty_=false;}
 void VulkanRenderer::update_camera(){
- float a=extent_.height?float(extent_.width)/float(extent_.height):1.0f;float cp=std::cos(pitch_),sp=std::sin(pitch_),cy=std::cos(yaw_),sy=std::sin(yaw_);
- float target_y=.35f;float ex=sy*cp*distance_,ey=target_y+sp*distance_,ez=cy*cp*distance_;M v=look(ex,ey,ez,0,target_y,0),p=persp(1.0471976f,a,.05f,150.0f),vp=mul(p,v);
- const float sx0=-.45f,sy0=.80f,sz0=-.35f;float sl=std::sqrt(sx0*sx0+sy0*sy0+sz0*sz0),sx=sx0/sl,sy=sy0/sl,sz=sz0/sl;
- M lv=look(sx*36.0f,sy*36.0f,sz*36.0f,0,0,0),lp=ortho(-18,18,-18,18,.1f,80),lvp=mul(lp,lv);
+ float a=extent_.height?float(extent_.width)/float(extent_.height):1.0f;float cp=std::cos(pitch_),sp=std::sin(pitch_),cy=std::cos(yaw_),siny=std::sin(yaw_);
+ float target_y=.35f;float ex=siny*cp*distance_,ey=target_y+sp*distance_,ez=cy*cp*distance_;M v=look(ex,ey,ez,0,target_y,0),p=persp(1.0471976f,a,.05f,150.0f),vp=mul(p,v);
+ const float sx0=-.45f,sy0=.80f,sz0=-.35f;float sl=std::sqrt(sx0*sx0+sy0*sy0+sz0*sz0),sun_x=sx0/sl,sun_y=sy0/sl,sun_z=sz0/sl;
+ M lv=look(sun_x*36.0f,sun_y*36.0f,sun_z*36.0f,0,0,0),lp=ortho(-18,18,-18,18,.1f,80),lvp=mul(lp,lv);
  CameraData c{};std::memcpy(c.view_proj,vp.v,64);std::memcpy(c.view,v.v,64);c.viewport_near_far[0]=float(extent_.width);c.viewport_near_far[1]=float(extent_.height);c.viewport_near_far[2]=.05f;c.viewport_near_far[3]=150.0f;std::memcpy(c.light_view_proj,lvp.v,64);
  c.camera_pos_time[0]=ex;c.camera_pos_time[1]=ey;c.camera_pos_time[2]=ez;c.camera_pos_time[3]=time_;
- c.sun_dir_intensity[0]=sx;c.sun_dir_intensity[1]=sy;c.sun_dir_intensity[2]=sz;c.sun_dir_intensity[3]=4.0f;
+ c.sun_dir_intensity[0]=sun_x;c.sun_dir_intensity[1]=sun_y;c.sun_dir_intensity[2]=sun_z;c.sun_dir_intensity[3]=4.0f;
  c.sky_params[0]=.60f;c.sky_params[1]=.010f;c.sky_params[2]=.34f;c.sky_params[3]=1.0471976f;std::memcpy(camera_mapped_,&c,sizeof(c));
 }
 void VulkanRenderer::touch(float x,float y,int action){
