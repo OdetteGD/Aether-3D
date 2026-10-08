@@ -18,8 +18,8 @@ layout(set=1,binding=4,std430) buffer TileDepth { vec2 ranges[]; } tileDepth;
 layout(push_constant) uniform RenderMode { uint mode; } renderMode;
 
 const uint CZ=24u;
-const uint MAX_LIGHTS=16u;
-const uint TILE_SIZE=32u;
+const uint MAX_LIGHTS=128u;
+const uint TILE_SIZE=16u;
 
 float depthToView(float d){
  float n=camera.viewportNearFar.z,f=camera.viewportNearFar.w;
