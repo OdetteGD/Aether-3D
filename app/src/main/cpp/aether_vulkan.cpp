@@ -1,5 +1,11 @@
 #include "aether_vulkan.h"
 #include "generated/shaders_spv.h"
+#if __has_include("generated/kenney_world.h")
+#include "generated/kenney_world.h"
+#define AETHER_HAS_KENNEY_WORLD 1
+#else
+#define AETHER_HAS_KENNEY_WORLD 0
+#endif
 #include <android/native_window.h>
 #include <android/log.h>
 #include <algorithm>
@@ -52,7 +58,7 @@ bool VulkanRenderer::create_render_targets(){
  VkImageView dat[]={depth_view_};VkFramebufferCreateInfo df{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};df.renderPass=depth_prepass_render_pass_;df.attachmentCount=1;df.pAttachments=dat;df.width=extent_.width;df.height=extent_.height;df.layers=1;return vkCreateFramebuffer(device_,&df,nullptr,&depth_prepass_framebuffer_)==VK_SUCCESS;
 }
 bool VulkanRenderer::create_mesh(){
- std::vector<VulkanRenderer::Vertex> v;std::vector<uint16_t> ix;v.reserve(5000);ix.reserve(12000);
+ std::vector<VulkanRenderer::Vertex> v;std::vector<uint16_t> ix;v.reserve(20000);ix.reserve(50000);
  auto terrain=[](float x,float z){return -1.05f+0.28f*std::sin(x*.24f)*std::cos(z*.19f)+0.11f*std::sin(x*.61f+z*.37f)+0.06f*std::cos(z*.83f-x*.17f);};
  auto add_box=[&](float cx,float cy,float cz,float hx,float hy,float hz,float r,float g,float b){
   uint16_t base=(uint16_t)v.size();
@@ -80,6 +86,22 @@ bool VulkanRenderer::create_mesh(){
  add_prop(-5.5f,4.8f,.55f,.95f,.55f,.25f,.29f,.34f);
  add_prop(5.6f,4.6f,.8f,1.15f,.65f,.34f,.36f,.42f);
  add_prop(0,-6.0f,1.4f,.45f,1.4f,.22f,.27f,.31f);
+#if AETHER_HAS_KENNEY_WORLD
+ if(aether_kenney::kVertexCount + v.size() >= 65536u)return false;
+ const uint32_t base=static_cast<uint32_t>(v.size());
+ v.reserve(v.size()+aether_kenney::kVertexCount);
+ ix.reserve(ix.size()+aether_kenney::kIndexCount);
+ for(uint32_t i=0;i<aether_kenney::kVertexCount;i++){
+  const auto& p=aether_kenney::kVertices[i];
+  v.push_back({p.px,p.py,p.pz,p.nx,p.ny,p.nz,p.r,p.g,p.b});
+ }
+ for(uint32_t i=0;i<aether_kenney::kIndexCount;i++){
+  ix.push_back(static_cast<uint16_t>(base+static_cast<uint32_t>(aether_kenney::kIndices[i])));
+ }
+ LOGE("Kenney world mesh enabled: %u vertices, %u indices",aether_kenney::kVertexCount,aether_kenney::kIndexCount);
+#else
+ LOGE("Kenney world header not generated; using procedural fallback world");
+#endif
  index_count_=(uint32_t)ix.size();
  if(v.size()>65535)return false;
  if(!create_buffer(VkDeviceSize(v.size()*sizeof(Vertex)),VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,vertex_buffer_,vertex_memory_)||
