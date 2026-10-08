@@ -6,7 +6,6 @@ add_library(aether3d SHARED
     aether_jni.cpp
     aether_engine.cpp
     aether_vulkan.cpp
-    generated/shaders_spv.h
 )
 target_compile_options(aether3d PRIVATE -Wall -Wextra -Werror -Wno-missing-field-initializers -fno-exceptions -fno-rtti)
 target_compile_definitions(aether3d PRIVATE VK_USE_PLATFORM_ANDROID_KHR=1)
