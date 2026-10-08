@@ -5,14 +5,14 @@ layout(location=2) in vec3 vColor;
 layout(location=3) in vec3 vSkyDir;
 layout(location=0) out vec4 outColor;
 layout(set=0,binding=0,std140) uniform Camera {
- mat4 viewProj;mat4 view;vec4 viewportNearFar;mat4 lightViewProj;vec4 cameraPosTime;vec4 sunDirIntensity;vec4 skyParams;
+ mat4 viewProj;mat4 view;vec4 viewportNearFar;mat4 lightViewProj;vec4 cameraPosTime;vec4 sunDirIntensity;vec4 skyParams;vec4 gridParams;
 } camera;
 struct Light { vec4 positionRadius; vec4 colorIntensity; };
 layout(set=1,binding=0,std430) readonly buffer Lights { Light lights[4]; } lightBuffer;
 layout(set=1,binding=1,std430) readonly buffer Clusters { uint data[]; } clusters;
 layout(set=1,binding=2) uniform sampler2DShadow shadowMap;
 layout(push_constant) uniform RenderMode { uint mode; } renderMode;
-const uint CX=16u,CY=9u,CZ=24u,CLUSTERS=CX*CY*CZ,MAX_LIGHTS=4u;
+const uint CZ=24u,MAX_LIGHTS=16u;
 
 float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise2(vec2 p){vec2 i=floor(p),q=fract(p);q=q*q*(3.0-2.0*q);return mix(mix(hash21(i),hash21(i+vec2(1,0)),q.x),mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),q.x),q.y);}
@@ -64,10 +64,10 @@ void main(){
  if(renderMode.mode==2u){vec3 s=skyColor(vSkyDir);vec3 mapped=s/(s+vec3(1));mapped=pow(max(mapped,vec3(0)),vec3(1.0/2.2));outColor=vec4(mapped,1);return;}
  vec3 n=normalize(vNormal),v=normalize(camera.cameraPosTime.xyz-vWorld);
  float depth=max(-(camera.view*vec4(vWorld,1)).z,camera.viewportNearFar.z);
- uint sx=min(CX-1u,uint(clamp(gl_FragCoord.x/camera.viewportNearFar.x,0.,.999999)*float(CX)));
- uint sy=min(CY-1u,uint(clamp(gl_FragCoord.y/camera.viewportNearFar.y,0.,.999999)*float(CY)));
+ uint CX=max(1u,uint(camera.gridParams.x)),CY=max(1u,uint(camera.gridParams.y));
+ uint sx=min(CX-1u,uint(gl_FragCoord.x/max(camera.gridParams.w,1.0))),sy=min(CY-1u,uint(gl_FragCoord.y/max(camera.gridParams.w,1.0)));
  uint sz=min(CZ-1u,uint(clamp(log(depth/camera.viewportNearFar.z)/log(camera.viewportNearFar.w/camera.viewportNearFar.z),0.,.999999)*float(CZ)));
- uint ci=(sz*CY+sy)*CX+sx,count=min(clusters.data[ci],MAX_LIGHTS);
+ uint CLUSTERS=CX*CY*CZ,ci=(sz*CY+sy)*CX+sx,count=min(clusters.data[ci],MAX_LIGHTS);
  vec3 base=clamp(vColor,vec3(.015),vec3(.95));float metallic=clamp(.08+.20*base.b,0.0,.72);float rough=clamp(.26+.36*(1.0-base.g),.16,.78);
  vec3 ambient=skyColor(reflect(-v,n))*(.10+.14*(1.0-rough))+vec3(.025,.035,.045);
  vec3 lit=ambient*base;
