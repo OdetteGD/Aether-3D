@@ -20,7 +20,13 @@ constexpr const char* kLogTag = "Aether3D";
 #define AETHER_LOGE(...) ((void)0)
 #endif
 
-template <typename T> T vk_struct(VkStructureType type) {\n    T value{};\n    value.sType = type;\n    return value;\n}\n\nbool has_extension(const std::vector<VkExtensionProperties>& extensions, const char* name) {
+template <typename T> T vk_struct(VkStructureType type) {
+    T value{};
+    value.sType = type;
+    return value;
+}
+
+bool has_extension(const std::vector<VkExtensionProperties>& extensions, const char* name) {
     return std::any_of(extensions.begin(), extensions.end(), [name](const VkExtensionProperties& ext) {
         return std::strcmp(ext.extensionName, name) == 0;
     });
