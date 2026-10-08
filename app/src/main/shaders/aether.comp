@@ -6,8 +6,18 @@ layout(set=1,binding=0,std430) readonly buffer Lights { Light lights[4]; } light
 layout(set=1,binding=1,std430) buffer Clusters { uint data[]; } clusters;
 const uint CX=16u,CY=9u,CZ=24u,CLUSTERS=CX*CY*CZ,MAX_LIGHTS=4u,LIGHT_COUNT=4u;
 void main(){
- uint ci=gl_GlobalInvocationID.x;if(ci>=CLUSTERS)return;uint count=0u,x=ci%CX,y=(ci/CX)%CY,z=ci/(CX*CY);
- vec2 center=vec2((float(x)+.5)/float(CX)*2.-1.,(float(y)+.5)/float(CY)*2.-1.);float dx=2./float(CX),dy=2./float(CY),nz=camera.viewportNearFar.z,fz=camera.viewportNearFar.w;
- for(uint li=0u;li<LIGHT_COUNT;li++){vec3 lp=(camera.view*vec4(lightBuffer.lights[li].positionRadius.xyz,1)).xyz;float depth=-lp.z;if(depth<nz||depth>fz)continue;vec4 clip=camera.viewProj*vec4(lightBuffer.lights[li].positionRadius.xyz,1);if(clip.w<=0)continue;vec2 ndc=clip.xy/clip.w;float rad=lightBuffer.lights[li].positionRadius.w/max(depth,.001)*.20;uint zz=min(CZ-1u,uint(clamp(log(depth/nz)/log(fz/nz),0.,.999999)*float(CZ)));if(abs(center.x-ndc.x)<=rad+dx&&abs(center.y-ndc.y)<=rad+dy&&abs(float(z)-float(zz))<=2.){if(count<MAX_LIGHTS){clusters.data[CLUSTERS+ci*MAX_LIGHTS+count]=li;count++;}}}
+ uint ci=gl_GlobalInvocationID.x;if(ci>=CLUSTERS)return;uint count=0u;
+ uint x=ci%CX,y=(ci/CX)%CY,z=ci/(CX*CY);
+ float nz=camera.viewportNearFar.z,fz=camera.viewportNearFar.w;
+ vec2 center=vec2((float(x)+.5)/float(CX)*2.-1.,(float(y)+.5)/float(CY)*2.-1.);
+ vec2 cell=vec2(2.0/float(CX),2.0/float(CY));
+ float z0=nz*exp(log(fz/nz)*float(z)/float(CZ)),z1=nz*exp(log(fz/nz)*float(z+1u)/float(CZ));
+ for(uint li=0u;li<LIGHT_COUNT;li++){
+  vec3 lpv=(camera.view*vec4(lightBuffer.lights[li].positionRadius.xyz,1)).xyz;float depth=-lpv.z,radius=lightBuffer.lights[li].positionRadius.w;
+  if(depth+radius<z0||depth-radius>z1||depth<=0.0)continue;
+  vec4 clip=camera.viewProj*vec4(lightBuffer.lights[li].positionRadius.xyz,1);if(clip.w<=0.0)continue;
+  vec2 ndc=clip.xy/clip.w;float screenR=radius/max(depth,.05)*1.65;
+  if(abs(center.x-ndc.x)<=screenR+cell.x*.55&&abs(center.y-ndc.y)<=screenR+cell.y*.55&&count<MAX_LIGHTS){clusters.data[CLUSTERS+ci*MAX_LIGHTS+count]=li;count++;}
+ }
  clusters.data[ci]=count;
 }
