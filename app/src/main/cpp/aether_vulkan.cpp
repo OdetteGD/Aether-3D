@@ -46,7 +46,6 @@ bool VulkanRenderer::create_mesh(){
   for(int q=0;q<6;q++){uint16_t b0=base+q*4;ix.insert(ix.end(),{(uint16_t)(b0+0),(uint16_t)(b0+1),(uint16_t)(b0+2),(uint16_t)(b0+2),(uint16_t)(b0+3),(uint16_t)(b0+0)});}
  };
  const int N=40;const float S=20.0f;const float step=(2.0f*S)/float(N);
- uint16_t base=0;
  for(int z=0;z<=N;z++)for(int x=0;x<=N;x++){
   float wx=-S+x*step,wz=-S+z*step,wy=terrain(wx,wz);
   float dx=step*.5f,dz=step*.5f;
