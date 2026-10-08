@@ -25,6 +25,7 @@ private:
     VkPhysicalDevice gpu_{VK_NULL_HANDLE};
     VkDevice device_{VK_NULL_HANDLE};
     VkQueue graphics_queue_{VK_NULL_HANDLE};
+    uint32_t queue_family_{0};
     VkSurfaceKHR surface_{VK_NULL_HANDLE};
     VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
     VkCommandPool command_pool_{VK_NULL_HANDLE};
