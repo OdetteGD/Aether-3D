@@ -14,8 +14,12 @@ public:
     void draw();
 private:
     struct Vertex { float px,py,pz,nx,ny,nz,r,g,b; };
-    struct CameraData { float view_proj[16]; float view[16]; float viewport_near_far[4]; };
-    struct LightData { float position_radius[4]; float color_intensity[4]; };
+    struct CameraData {
+        float view_proj[16]; float view[16]; float viewport_near_far[4];
+        float light_view_proj[16]; float camera_pos_time[4]; float sun_dir_intensity[4]; float sky_params[4];
+    };
+    struct Light { float position_radius[4]; float color_intensity[4]; };
+    struct LightData { Light lights[4]; };
     bool init();
     void shutdown();
     bool create_instance();
@@ -24,6 +28,7 @@ private:
     bool create_swapchain();
     bool create_render_targets();
     bool create_forward_plus_resources();
+    bool create_shadow_resources();
     bool create_mesh();
     bool create_pipelines();
     bool create_descriptors();
@@ -62,7 +67,15 @@ private:
     VkDescriptorSet camera_set_{VK_NULL_HANDLE};
     VkDescriptorSet lighting_set_{VK_NULL_HANDLE};
     VkPipelineLayout pipeline_layout_{VK_NULL_HANDLE};
+    VkRenderPass shadow_render_pass_{VK_NULL_HANDLE};
+    VkImage shadow_image_{VK_NULL_HANDLE};
+    VkDeviceMemory shadow_memory_{VK_NULL_HANDLE};
+    VkImageView shadow_view_{VK_NULL_HANDLE};
+    VkSampler shadow_sampler_{VK_NULL_HANDLE};
+    VkFramebuffer shadow_framebuffer_{VK_NULL_HANDLE};
     VkPipeline graphics_pipeline_{VK_NULL_HANDLE};
+    VkPipeline sky_pipeline_{VK_NULL_HANDLE};
+    VkPipeline shadow_pipeline_{VK_NULL_HANDLE};
     VkPipeline compute_pipeline_{VK_NULL_HANDLE};
     VkBuffer camera_buffer_{VK_NULL_HANDLE};
     VkDeviceMemory camera_memory_{VK_NULL_HANDLE};
@@ -81,6 +94,7 @@ private:
     uint32_t width_{1},height_{1};
     float yaw_{0.0f}, pitch_{0.20f}, distance_{6.0f};
     float last_x_{0.0f}, last_y_{0.0f};
+    float time_{0.0f};
     bool touching_{false};
     bool initialized_{false};
     bool dirty_{true};
