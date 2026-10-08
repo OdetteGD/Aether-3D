@@ -38,7 +38,6 @@ shared uint tileMaxDepthBits;
 void main() {
     const uvec2 pixel = gl_GlobalInvocationID.xy;
     const uint tilesX = (constants.screenWidth + 15u) / 16u;
-    const uint tilesY = (constants.screenHeight + 15u) / 16u;
 
     if (gl_LocalInvocationIndex == 0u) {
         tileMinDepthBits = floatBitsToUint(1.0);
@@ -67,18 +66,12 @@ void main() {
         // four tile-frustum plane tests and depth-range test.
         headers[tileIndex] = uvec2(tileIndex * constants.maxLightsPerTile, 0u);
 
-        // Keep the computed range live so the shader compiler cannot remove
-        // the depth reduction while the culling kernel is being integrated.
+        // Keep the reduction result observable while the full intersection
+        // kernel is added.
         const float minDepth = uintBitsToFloat(tileMinDepthBits);
         const float maxDepth = uintBitsToFloat(tileMaxDepthBits);
         if (minDepth > maxDepth) {
             headers[tileIndex].y = 0u;
         }
     }
-
-    (void)lights;
-    (void)indices;
-    (void)tilesY;
-    (void)constants.inverseProjection;
-    (void)constants.lightCount;
 }
