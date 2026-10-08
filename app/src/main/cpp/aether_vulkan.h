@@ -16,10 +16,10 @@ private:
     struct Vertex { float px,py,pz,nx,ny,nz,r,g,b; };
     struct CameraData {
         float view_proj[16]; float view[16]; float viewport_near_far[4];
-        float light_view_proj[16]; float camera_pos_time[4]; float sun_dir_intensity[4]; float sky_params[4];
+        float light_view_proj[16]; float camera_pos_time[4]; float sun_dir_intensity[4]; float sky_params[4]; float grid_params[4];
     };
     struct Light { float position_radius[4]; float color_intensity[4]; };
-    struct LightData { Light lights[4]; };
+    struct LightData { Light lights[128]; };
     bool init();
     void shutdown();
     bool create_instance();
@@ -33,6 +33,7 @@ private:
     bool create_pipelines();
     bool create_descriptors();
     void destroy_swapchain();
+    void update_lights();
     void update_camera();
     void recreate_swapchain();
     uint32_t find_memory(uint32_t type_bits, VkMemoryPropertyFlags flags) const;
@@ -52,9 +53,12 @@ private:
     std::vector<VkImageView> swapchain_views_;
     std::vector<VkFramebuffer> framebuffers_;
     VkRenderPass render_pass_{VK_NULL_HANDLE};
+    VkRenderPass depth_prepass_render_pass_{VK_NULL_HANDLE};
+    VkFramebuffer depth_prepass_framebuffer_{VK_NULL_HANDLE};
     VkImage depth_image_{VK_NULL_HANDLE};
     VkDeviceMemory depth_memory_{VK_NULL_HANDLE};
     VkImageView depth_view_{VK_NULL_HANDLE};
+    VkSampler depth_sampler_{VK_NULL_HANDLE};
     VkFormat depth_format_{VK_FORMAT_D32_SFLOAT};
     VkFormat shadow_format_{VK_FORMAT_D16_UNORM};
     VkCommandPool command_pool_{VK_NULL_HANDLE};
@@ -75,6 +79,7 @@ private:
     VkSampler shadow_sampler_{VK_NULL_HANDLE};
     VkFramebuffer shadow_framebuffer_{VK_NULL_HANDLE};
     VkPipeline graphics_pipeline_{VK_NULL_HANDLE};
+    VkPipeline depth_prepass_pipeline_{VK_NULL_HANDLE};
     VkPipeline sky_pipeline_{VK_NULL_HANDLE};
     VkPipeline shadow_pipeline_{VK_NULL_HANDLE};
     VkPipeline compute_pipeline_{VK_NULL_HANDLE};
@@ -87,15 +92,19 @@ private:
     VkBuffer light_buffer_{VK_NULL_HANDLE};
     VkDeviceMemory light_memory_{VK_NULL_HANDLE};
     VkBuffer cluster_buffer_{VK_NULL_HANDLE};
+    VkBuffer tile_depth_buffer_{VK_NULL_HANDLE};
+    VkDeviceMemory tile_depth_memory_{VK_NULL_HANDLE};
     VkDeviceMemory cluster_memory_{VK_NULL_HANDLE};
     void* camera_mapped_{};
     void* light_mapped_{};
     void* cluster_mapped_{};
+    void* tile_depth_mapped_{};
     uint32_t index_count_{0};
     uint32_t width_{1},height_{1};
     float yaw_{0.0f}, pitch_{0.16f}, distance_{9.5f};
     float last_x_{0.0f}, last_y_{0.0f};
     float time_{0.0f};
+    uint32_t light_count_{128};
     bool touching_{false};
     bool initialized_{false};
     bool dirty_{true};
