@@ -35,7 +35,7 @@ jobs:
           glslangValidator -V app/src/main/shaders/aether.frag -o app/src/main/shaders/aether.frag.spv
           glslangValidator -V app/src/main/shaders/aether.comp -o app/src/main/shaders/aether.comp.spv
           python3 tools/generate_spirv_header.py
-          test -s app/src/main/cpp/generated/shaders_spv.h
+          test -f app/src/main/cpp/generated/shaders_spv.h && wc -c app/src/main/cpp/generated/shaders_spv.h
       - name: Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
