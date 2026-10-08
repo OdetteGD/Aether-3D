@@ -10,7 +10,7 @@ public final class AetherActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        view = new AetherSurfaceView();
+        view = new AetherSurfaceView(this);
         setContentView(view);
     }
 
@@ -22,8 +22,8 @@ public final class AetherActivity extends Activity {
     private static final class AetherSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
         private boolean ready;
 
-        AetherSurfaceView() {
-            super(AetherActivity.this);
+        AetherSurfaceView(Activity activity) {
+            super(activity);
             getHolder().addCallback(this);
         }
 
