@@ -1,0 +1,9 @@
+#version 450
+layout(location=0) in vec3 inPos;
+layout(location=1) in vec3 inNormal;
+layout(location=2) in vec3 inColor;
+layout(location=0) out vec3 vWorld;
+layout(location=1) out vec3 vNormal;
+layout(location=2) out vec3 vColor;
+layout(set=0,binding=0,std140) uniform Camera { mat4 viewProj; mat4 view; vec4 viewportNearFar; } camera;
+void main(){ vec4 wp=vec4(inPos,1.0); vWorld=wp.xyz; vNormal=inNormal; vColor=inColor; gl_Position=camera.viewProj*wp; }
