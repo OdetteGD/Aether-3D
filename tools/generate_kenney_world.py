@@ -29,18 +29,18 @@ SHA256 = "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d"
 # Small, representative subset. The full pack stays at Kenney; only geometry
 # needed by the mobile showcase scene is baked into the APK.
 MODELS = {
-    "tree-oak": ("tree-oak.glb", 4.6),
-    "tree-default": ("tree-default.glb", 4.2),
-    "tree-pinedefaulta": ("tree-pinedefaulta.glb", 4.8),
-    "tree-pineroundb": ("tree-pineroundb.glb", 4.5),
-    "plant-bushdetailed": ("plant-bushdetailed.glb", 3.8),
-    "rock-largea": ("rock-largea.glb", 2.8),
-    "rock-smalla": ("rock-smalla.glb", 2.4),
-    "grass-large": ("grass-large.glb", 3.0),
-    "flower-purplea": ("flower-purplea.glb", 2.8),
-    "flower-redb": ("flower-redb.glb", 2.8),
-    "mushroom-redgroup": ("mushroom-redgroup.glb", 2.6),
-    "log-stack": ("log-stack.glb", 2.8),
+    "tree-oak": ("tree_oak.glb", 4.6),
+    "tree-default": ("tree_default.glb", 4.2),
+    "tree-pinedefaulta": ("tree_pineDefaultA.glb", 4.8),
+    "tree-pineroundb": ("tree_pineRoundB.glb", 4.5),
+    "plant-bushdetailed": ("plant_bushDetailed.glb", 3.8),
+    "rock-largea": ("rock_largeA.glb", 2.8),
+    "rock-smalla": ("rock_smallA.glb", 2.4),
+    "grass-large": ("grass_large.glb", 3.0),
+    "flower-purplea": ("flower_purpleA.glb", 2.8),
+    "flower-redb": ("flower_redB.glb", 2.8),
+    "mushroom-redgroup": ("mushroom_redGroup.glb", 2.6),
+    "log-stack": ("log_stack.glb", 2.8),
 }
 
 # x, z, model key, yaw radians, scale multiplier.
