@@ -116,6 +116,50 @@ bool VulkanRenderer::create_forward_plus_resources(){
  return create_mesh()&&create_shadow_resources()&&create_descriptors()&&create_pipelines();
 }
 bool VulkanRenderer::init(){if(!create_instance())return false;initialized_=true;return true;}
+void VulkanRenderer::destroy_swapchain(){
+ if(!device_)return;
+ if(camera_mapped_){vkUnmapMemory(device_,camera_memory_);camera_mapped_=nullptr;}
+ if(light_mapped_){vkUnmapMemory(device_,light_memory_);light_mapped_=nullptr;}
+ if(cluster_mapped_){vkUnmapMemory(device_,cluster_memory_);cluster_mapped_=nullptr;}
+ if(graphics_pipeline_)vkDestroyPipeline(device_,graphics_pipeline_,nullptr);graphics_pipeline_=VK_NULL_HANDLE;
+ if(sky_pipeline_)vkDestroyPipeline(device_,sky_pipeline_,nullptr);sky_pipeline_=VK_NULL_HANDLE;
+ if(shadow_pipeline_)vkDestroyPipeline(device_,shadow_pipeline_,nullptr);shadow_pipeline_=VK_NULL_HANDLE;
+ if(compute_pipeline_)vkDestroyPipeline(device_,compute_pipeline_,nullptr);compute_pipeline_=VK_NULL_HANDLE;
+ if(pipeline_layout_)vkDestroyPipelineLayout(device_,pipeline_layout_,nullptr);pipeline_layout_=VK_NULL_HANDLE;
+ if(descriptor_pool_)vkDestroyDescriptorPool(device_,descriptor_pool_,nullptr);descriptor_pool_=VK_NULL_HANDLE;
+ if(camera_set_layout_)vkDestroyDescriptorSetLayout(device_,camera_set_layout_,nullptr);camera_set_layout_=VK_NULL_HANDLE;
+ if(lighting_set_layout_)vkDestroyDescriptorSetLayout(device_,lighting_set_layout_,nullptr);lighting_set_layout_=VK_NULL_HANDLE;
+ camera_set_=VK_NULL_HANDLE;lighting_set_=VK_NULL_HANDLE;
+ if(shadow_framebuffer_)vkDestroyFramebuffer(device_,shadow_framebuffer_,nullptr);shadow_framebuffer_=VK_NULL_HANDLE;
+ if(shadow_render_pass_)vkDestroyRenderPass(device_,shadow_render_pass_,nullptr);shadow_render_pass_=VK_NULL_HANDLE;
+ if(shadow_sampler_)vkDestroySampler(device_,shadow_sampler_,nullptr);shadow_sampler_=VK_NULL_HANDLE;
+ if(shadow_view_)vkDestroyImageView(device_,shadow_view_,nullptr);shadow_view_=VK_NULL_HANDLE;
+ if(shadow_image_)vkDestroyImage(device_,shadow_image_,nullptr);shadow_image_=VK_NULL_HANDLE;
+ if(shadow_memory_)vkFreeMemory(device_,shadow_memory_,nullptr);shadow_memory_=VK_NULL_HANDLE;
+ if(vertex_buffer_)vkDestroyBuffer(device_,vertex_buffer_,nullptr);vertex_buffer_=VK_NULL_HANDLE;
+ if(vertex_memory_)vkFreeMemory(device_,vertex_memory_,nullptr);vertex_memory_=VK_NULL_HANDLE;
+ if(index_buffer_)vkDestroyBuffer(device_,index_buffer_,nullptr);index_buffer_=VK_NULL_HANDLE;
+ if(index_memory_)vkFreeMemory(device_,index_memory_,nullptr);index_memory_=VK_NULL_HANDLE;
+ if(camera_buffer_)vkDestroyBuffer(device_,camera_buffer_,nullptr);camera_buffer_=VK_NULL_HANDLE;
+ if(camera_memory_)vkFreeMemory(device_,camera_memory_,nullptr);camera_memory_=VK_NULL_HANDLE;
+ if(light_buffer_)vkDestroyBuffer(device_,light_buffer_,nullptr);light_buffer_=VK_NULL_HANDLE;
+ if(light_memory_)vkFreeMemory(device_,light_memory_,nullptr);light_memory_=VK_NULL_HANDLE;
+ if(cluster_buffer_)vkDestroyBuffer(device_,cluster_buffer_,nullptr);cluster_buffer_=VK_NULL_HANDLE;
+ if(cluster_memory_)vkFreeMemory(device_,cluster_memory_,nullptr);cluster_memory_=VK_NULL_HANDLE;
+ index_count_=0;
+ if(in_flight_)vkDestroyFence(device_,in_flight_,nullptr);in_flight_=VK_NULL_HANDLE;
+ if(image_available_)vkDestroySemaphore(device_,image_available_,nullptr);image_available_=VK_NULL_HANDLE;
+ if(render_finished_)vkDestroySemaphore(device_,render_finished_,nullptr);render_finished_=VK_NULL_HANDLE;
+ if(command_pool_)vkDestroyCommandPool(device_,command_pool_,nullptr);command_pool_=VK_NULL_HANDLE;command_buffer_=VK_NULL_HANDLE;
+ for(auto fb:framebuffers_)if(fb)vkDestroyFramebuffer(device_,fb,nullptr);framebuffers_.clear();
+ if(render_pass_)vkDestroyRenderPass(device_,render_pass_,nullptr);render_pass_=VK_NULL_HANDLE;
+ if(depth_view_)vkDestroyImageView(device_,depth_view_,nullptr);depth_view_=VK_NULL_HANDLE;
+ if(depth_image_)vkDestroyImage(device_,depth_image_,nullptr);depth_image_=VK_NULL_HANDLE;
+ if(depth_memory_)vkFreeMemory(device_,depth_memory_,nullptr);depth_memory_=VK_NULL_HANDLE;
+ for(auto v:swapchain_views_)if(v)vkDestroyImageView(device_,v,nullptr);swapchain_views_.clear();
+ swapchain_images_.clear();
+ if(swapchain_)vkDestroySwapchainKHR(device_,swapchain_,nullptr);swapchain_=VK_NULL_HANDLE;
+}
 void VulkanRenderer::set_window(ANativeWindow*w){if(w==window_&&swapchain_)return;if(!w){if(device_)vkDeviceWaitIdle(device_);destroy_swapchain();if(surface_)vkDestroySurfaceKHR(instance_,surface_,nullptr);surface_=VK_NULL_HANDLE;window_=nullptr;return;}if(device_)vkDeviceWaitIdle(device_);destroy_swapchain();window_=w;if(!surface_&&!create_surface()){LOGE("surface creation failed");return;}if(!device_&&!create_device()){LOGE("device creation failed");return;}if(!create_swapchain()||!create_render_targets()||!create_forward_plus_resources()){LOGE("Vulkan 3D resource creation failed");return;}dirty_=false;}
 void VulkanRenderer::resize(uint32_t w,uint32_t h){width_=std::max(1u,w);height_=std::max(1u,h);dirty_=true;}
 void VulkanRenderer::recreate_swapchain(){if(!device_||!surface_)return;vkDeviceWaitIdle(device_);destroy_swapchain();if(create_swapchain()&&create_render_targets()&&create_forward_plus_resources())dirty_=false;}
