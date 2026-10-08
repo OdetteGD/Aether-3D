@@ -28,6 +28,12 @@ jobs:
           sudo apt-get install -y glslang-tools
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.31.6"
+      - name: Fetch and bake Kenney Nature world
+        run: |
+          python3 tools/generate_kenney_world.py --output app/src/main/cpp/generated/kenney_world.h
+          test -s app/src/main/cpp/generated/kenney_world.h
+          wc -c app/src/main/cpp/generated/kenney_world.h
+
       - name: Compile Vulkan shaders
         run: |
           mkdir -p app/src/main/shaders
