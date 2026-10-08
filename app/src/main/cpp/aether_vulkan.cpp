@@ -36,7 +36,7 @@ bool VulkanRenderer::create_device(){
         for(uint32_t i=0;i<qn;i++){
             VkBool32 present=VK_FALSE;
             if(surface_) vkGetPhysicalDeviceSurfaceSupportKHR(d,i,surface_,&present);
-            if((q[i].queueFlags&VK_QUEUE_GRAPHICS_BIT) && present){ gpu_=d;
+            if((q[i].queueFlags&VK_QUEUE_GRAPHICS_BIT) && present){ gpu_=d; queue_family_=i;
                 float pr=1.f; VkDeviceQueueCreateInfo qi{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
                 qi.queueFamilyIndex=i; qi.queueCount=1; qi.pQueuePriorities=&pr;
                 const char* exts[]={"VK_KHR_swapchain"};
@@ -75,7 +75,7 @@ bool VulkanRenderer::create_forward_plus_resources(){
     // Actual cluster dispatch/pipeline is enabled in the next rendering milestone.
     VkCommandPoolCreateInfo pi{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
     pi.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    pi.queueFamilyIndex=0;
+    pi.queueFamilyIndex=queue_family_;
     if(vkCreateCommandPool(device_,&pi,nullptr,&command_pool_)!=VK_SUCCESS)return false;
     VkCommandBufferAllocateInfo ai{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
     ai.commandPool=command_pool_; ai.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY; ai.commandBufferCount=1;
