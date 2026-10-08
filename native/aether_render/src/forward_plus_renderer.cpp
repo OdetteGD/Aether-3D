@@ -20,7 +20,7 @@ constexpr const char* kLogTag = "Aether3D";
 #define AETHER_LOGE(...) ((void)0)
 #endif
 
-bool has_extension(const std::vector<VkExtensionProperties>& extensions, const char* name) {
+template <typename T> T vk_struct(VkStructureType type) {\n    T value{};\n    value.sType = type;\n    return value;\n}\n\nbool has_extension(const std::vector<VkExtensionProperties>& extensions, const char* name) {
     return std::any_of(extensions.begin(), extensions.end(), [name](const VkExtensionProperties& ext) {
         return std::strcmp(ext.extensionName, name) == 0;
     });
@@ -58,14 +58,14 @@ bool ForwardPlusRenderer::create_instance() {
     required.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #endif
 
-    VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
+    auto app = vk_struct<VkApplicationInfo>(VK_STRUCTURE_TYPE_APPLICATION_INFO);
     app.pApplicationName = "Aether-3D";
     app.applicationVersion = VK_MAKE_VERSION(0, 1, 0);
     app.pEngineName = "Aether Mobile Renderer";
     app.engineVersion = VK_MAKE_VERSION(0, 1, 0);
     app.apiVersion = VK_API_VERSION_1_0;
 
-    VkInstanceCreateInfo info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+    auto info = vk_struct<VkInstanceCreateInfo>(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
     info.pApplicationInfo = &app;
     info.enabledExtensionCount = static_cast<uint32_t>(required.size());
     info.ppEnabledExtensionNames = required.empty() ? nullptr : required.data();
@@ -81,7 +81,7 @@ bool ForwardPlusRenderer::create_instance() {
 
 bool ForwardPlusRenderer::create_surface() {
 #if defined(__ANDROID__)
-    VkAndroidSurfaceCreateInfoKHR info{VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR};
+    auto info = vk_struct<VkAndroidSurfaceCreateInfoKHR>(VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR);
     info.window = window_;
     return vkCreateAndroidSurfaceKHR(instance_, &info, nullptr, &surface_) == VK_SUCCESS;
 #else
@@ -133,13 +133,13 @@ bool ForwardPlusRenderer::create_device() {
     std::array<VkDeviceQueueCreateInfo, 2> queues{};
     uint32_t queue_count = 1;
 
-    queues[0] = {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+    queues[0] = vk_struct<VkDeviceQueueCreateInfo>(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
     queues[0].queueFamilyIndex = graphics_family_;
     queues[0].queueCount = 1;
     queues[0].pQueuePriorities = &priority;
 
     if (present_family_ != graphics_family_) {
-        queues[1] = {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+        queues[1] = vk_struct<VkDeviceQueueCreateInfo>(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
         queues[1].queueFamilyIndex = present_family_;
         queues[1].queueCount = 1;
         queues[1].pQueuePriorities = &priority;
@@ -159,7 +159,7 @@ bool ForwardPlusRenderer::create_device() {
     const char* device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     VkPhysicalDeviceFeatures features{};
 
-    VkDeviceCreateInfo info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+    auto info = vk_struct<VkDeviceCreateInfo>(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
     info.queueCreateInfoCount = queue_count;
     info.pQueueCreateInfos = queues.data();
     info.enabledExtensionCount = 1;
@@ -219,7 +219,7 @@ bool ForwardPlusRenderer::create_swapchain() {
     uint32_t image_count = caps.minImageCount + 1;
     if (caps.maxImageCount != 0) image_count = std::min(image_count, caps.maxImageCount);
 
-    VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+    auto info = vk_struct<VkSwapchainCreateInfoKHR>(VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR);
     info.surface = surface_;
     info.minImageCount = image_count;
     info.imageFormat = chosen.format;
@@ -254,14 +254,14 @@ bool ForwardPlusRenderer::create_swapchain() {
 }
 
 bool ForwardPlusRenderer::create_command_resources() {
-    VkCommandPoolCreateInfo pool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+    auto pool = vk_struct<VkCommandPoolCreateInfo>(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
     pool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     pool.queueFamilyIndex = graphics_family_;
 
     if (vkCreateCommandPool(device_, &pool, nullptr, &command_pool_) != VK_SUCCESS) return false;
 
     command_buffers_.resize(config_.frames_in_flight);
-    VkCommandBufferAllocateInfo alloc{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+    auto alloc = vk_struct<VkCommandBufferAllocateInfo>(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
     alloc.commandPool = command_pool_;
     alloc.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     alloc.commandBufferCount = static_cast<uint32_t>(command_buffers_.size());
@@ -274,8 +274,8 @@ bool ForwardPlusRenderer::create_sync_objects() {
     render_finished_.resize(config_.frames_in_flight);
     in_flight_.resize(config_.frames_in_flight);
 
-    VkSemaphoreCreateInfo semaphore{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-    VkFenceCreateInfo fence{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    auto semaphore = vk_struct<VkSemaphoreCreateInfo>(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+    auto fence = vk_struct<VkFenceCreateInfo>(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
     fence.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     for (uint32_t i = 0; i < config_.frames_in_flight; ++i) {
@@ -341,7 +341,7 @@ bool ForwardPlusRenderer::begin_frame() {
     VkCommandBuffer command_buffer = command_buffers_[frame_index_];
     if (vkResetCommandBuffer(command_buffer, 0) != VK_SUCCESS) return false;
 
-    VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    auto begin = vk_struct<VkCommandBufferBeginInfo>(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
     return vkBeginCommandBuffer(command_buffer, &begin) == VK_SUCCESS;
 }
 
@@ -359,7 +359,7 @@ bool ForwardPlusRenderer::end_frame() {
     if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) return false;
 
     VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+    auto submit = vk_struct<VkSubmitInfo>(VK_STRUCTURE_TYPE_SUBMIT_INFO);
     submit.waitSemaphoreCount = 1;
     submit.pWaitSemaphores = &image_available_[frame_index_];
     submit.pWaitDstStageMask = &wait_stage;
@@ -370,7 +370,7 @@ bool ForwardPlusRenderer::end_frame() {
 
     if (vkQueueSubmit(graphics_queue_, 1, &submit, in_flight_[frame_index_]) != VK_SUCCESS) return false;
 
-    VkPresentInfoKHR present{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+    auto present = vk_struct<VkPresentInfoKHR>(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
     present.waitSemaphoreCount = 1;
     present.pWaitSemaphores = &render_finished_[frame_index_];
     present.swapchainCount = 1;
