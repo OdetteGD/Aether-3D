@@ -8,11 +8,11 @@ layout(set=0,binding=0,std140) uniform Camera {
  mat4 viewProj;mat4 view;vec4 viewportNearFar;mat4 lightViewProj;vec4 cameraPosTime;vec4 sunDirIntensity;vec4 skyParams;vec4 gridParams;
 } camera;
 struct Light { vec4 positionRadius; vec4 colorIntensity; };
-layout(set=1,binding=0,std430) readonly buffer Lights { Light lights[4]; } lightBuffer;
+layout(set=1,binding=0,std430) readonly buffer Lights { Light lights[1024]; } lightBuffer;
 layout(set=1,binding=1,std430) readonly buffer Clusters { uint data[]; } clusters;
 layout(set=1,binding=2) uniform sampler2DShadow shadowMap;
 layout(push_constant) uniform RenderMode { uint mode; } renderMode;
-const uint CZ=24u,MAX_LIGHTS=16u;
+const uint CZ=24u,MAX_LIGHTS=128u;
 
 float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise2(vec2 p){vec2 i=floor(p),q=fract(p);q=q*q*(3.0-2.0*q);return mix(mix(hash21(i),hash21(i+vec2(1,0)),q.x),mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),q.x),q.y);}
