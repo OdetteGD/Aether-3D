@@ -10,11 +10,6 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,"Aether3D",__VA_ARGS__)
 
 namespace aether {
-static uint32_t find_memory(VkPhysicalDevice p,uint32_t typeBits,VkMemoryPropertyFlags flags){
-    VkPhysicalDeviceMemoryProperties m{}; vkGetPhysicalDeviceMemoryProperties(p,&m);
-    for(uint32_t i=0;i<m.memoryTypeCount;i++) if((typeBits&(1u<<i)) && (m.memoryTypes[i].propertyFlags&flags)==flags) return i;
-    return UINT32_MAX;
-}
 VulkanRenderer::VulkanRenderer(){ init(); }
 VulkanRenderer::~VulkanRenderer(){ shutdown(); }
 
