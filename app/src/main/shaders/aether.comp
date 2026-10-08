@@ -1,22 +1,13 @@
 #version 450
 layout(local_size_x=1) in;
-layout(set=0,binding=0,std140) uniform Camera { mat4 viewProj; mat4 view; vec4 viewportNearFar; } camera;
-struct Light { vec4 positionRadius; vec4 colorIntensity; };
-layout(set=1,binding=0,std430) readonly buffer Lights { Light lights[]; } lightBuffer;
-layout(set=1,binding=1,std430) buffer Clusters { uint counts[]; } clusters;
-const uint CX=16u, CY=9u, CZ=24u;
+layout(set=0,binding=0,std140) uniform Camera { mat4 viewProj;mat4 view;vec4 viewportNearFar;mat4 lightViewProj;vec4 cameraPosTime;vec4 sunDirIntensity;vec4 skyParams; } camera;
+struct Light { vec4 positionRadius;vec4 colorIntensity; };
+layout(set=1,binding=0,std430) readonly buffer Lights { Light lights[4]; } lightBuffer;
+layout(set=1,binding=1,std430) buffer Clusters { uint data[]; } clusters;
+const uint CX=16u,CY=9u,CZ=24u,CLUSTERS=CX*CY*CZ,MAX_LIGHTS=4u,LIGHT_COUNT=4u;
 void main(){
- float NEAR_Z=camera.viewportNearFar.z, FAR_Z=camera.viewportNearFar.w;
- uint ci=gl_GlobalInvocationID.x; if(ci>=CX*CY*CZ)return;
- clusters.counts[ci]=0u;
- vec3 lp=(camera.view*vec4(lightBuffer.lights[0].positionRadius.xyz,1.0)).xyz; float depth=-lp.z;
- if(depth<NEAR_Z || depth>FAR_Z)return;
- vec4 clip=camera.viewProj*vec4(lightBuffer.lights[0].positionRadius.xyz,1.0); if(clip.w<=0.0)return;
- vec2 ndc=clip.xy/clip.w; float radius=lightBuffer.lights[0].positionRadius.w/max(depth,0.001)*0.2;
- uint sx=min(CX-1u,uint(clamp((ndc.x*0.5+0.5),0.0,0.999999)*float(CX)));
- uint sy=min(CY-1u,uint(clamp((ndc.y*0.5+0.5),0.0,0.999999)*float(CY)));
- uint sz=min(CZ-1u,uint(clamp(log(depth/NEAR_Z)/log(FAR_Z/NEAR_Z),0.0,0.999999)*float(CZ)));
- uint x=ci%CX, y=(ci/CX)%CY, z=ci/(CX*CY); vec2 center=vec2((float(x)+0.5)/float(CX)*2.0-1.0,(float(y)+0.5)/float(CY)*2.0-1.0);
- float dx=2.0/float(CX), dy=2.0/float(CY);
- if(abs(center.x-ndc.x)<=radius+dx && abs(center.y-ndc.y)<=radius+dy && abs(float(z)-float(sz))<=2.0) clusters.counts[ci]=1u;
+ uint ci=gl_GlobalInvocationID.x;if(ci>=CLUSTERS)return;uint count=0u,x=ci%CX,y=(ci/CX)%CY,z=ci/(CX*CY);
+ vec2 center=vec2((float(x)+.5)/float(CX)*2.-1.,(float(y)+.5)/float(CY)*2.-1.);float dx=2./float(CX),dy=2./float(CY),nz=camera.viewportNearFar.z,fz=camera.viewportNearFar.w;
+ for(uint li=0u;li<LIGHT_COUNT;li++){vec3 lp=(camera.view*vec4(lightBuffer.lights[li].positionRadius.xyz,1)).xyz;float depth=-lp.z;if(depth<nz||depth>fz)continue;vec4 clip=camera.viewProj*vec4(lightBuffer.lights[li].positionRadius.xyz,1);if(clip.w<=0)continue;vec2 ndc=clip.xy/clip.w;float rad=lightBuffer.lights[li].positionRadius.w/max(depth,.001)*.20;uint zz=min(CZ-1u,uint(clamp(log(depth/nz)/log(fz/nz),0.,.999999)*float(CZ)));if(abs(center.x-ndc.x)<=rad+dx&&abs(center.y-ndc.y)<=rad+dy&&abs(float(z)-float(zz))<=2.){if(count<MAX_LIGHTS){clusters.data[CLUSTERS+ci*MAX_LIGHTS+count]=li;count++;}}}
+ clusters.data[ci]=count;
 }
