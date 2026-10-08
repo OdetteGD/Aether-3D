@@ -56,3 +56,8 @@ The showcase world is built from a verified subset of **Kenney Nature Kit 2.1** 
 
 - Kenney Nature Kit: https://kenney.nl/assets/nature-kit
 - Forward+ reference: https://github.com/zimengyang/ForwardPlus_Vulkan
+
+
+## Forward+ renderer basis
+
+Aether 3D's Vulkan renderer follows the Forward+ pipeline described by [zimengyang/ForwardPlus_Vulkan](https://github.com/zimengyang/ForwardPlus_Vulkan): depth pre-pass, screen-space tile/frustum light culling, compact light lists, and final forward shading. The Android implementation is native to Aether/ANativeWindow and is an independent implementation rather than a verbatim vendor copy. The reference documents 16x16/32x32 tile sizing, point-light frustum culling, material grouping, texture/normal/specular mapping, and debug views. See the upstream reference for the original desktop implementation and attribution.
