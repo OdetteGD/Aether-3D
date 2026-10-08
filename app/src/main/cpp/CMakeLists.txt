@@ -7,7 +7,8 @@ add_library(aether3d SHARED
     aether_engine.cpp
     aether_vulkan.cpp
 )
-target_compile_options(aether3d PRIVATE -Wall -Wextra -Werror -fno-exceptions -fno-rtti)
+target_compile_options(aether3d PRIVATE -Wall -Wextra -Werror -Wno-missing-field-initializers -fno-exceptions -fno-rtti)
+target_compile_definitions(aether3d PRIVATE VK_USE_PLATFORM_ANDROID_KHR=1)
 find_library(log-lib log)
 find_library(android-lib android)
 find_library(vulkan-lib vulkan)
