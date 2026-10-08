@@ -15,9 +15,10 @@ static void start_render(){
     g_thread=std::thread([]{ while(g_running){ {std::lock_guard<std::mutex> lock(g_mutex); g_engine.tick(); } std::this_thread::sleep_for(std::chrono::milliseconds(8)); }});
 }
 extern "C" JNIEXPORT void JNICALL Java_com_odettegd_aether3d_MainActivity_nativeSetSurface(JNIEnv* env,jobject,jobject surface){
-    std::lock_guard<std::mutex> lock(g_mutex);
-    if(!surface){ stop_render(); g_engine.set_window(nullptr); return; }
-    ANativeWindow* w=ANativeWindow_fromSurface(env,surface); g_engine.set_window(w); ANativeWindow_release(w); start_render();
+    if(!surface){ stop_render(); std::lock_guard<std::mutex> lock(g_mutex); g_engine.set_window(nullptr); return; }
+    ANativeWindow* w=ANativeWindow_fromSurface(env,surface);
+    { std::lock_guard<std::mutex> lock(g_mutex); g_engine.set_window(w); }
+    ANativeWindow_release(w); start_render();
 }
 extern "C" JNIEXPORT void JNICALL Java_com_odettegd_aether3d_MainActivity_nativeResize(JNIEnv*,jobject,jint w,jint h){
     std::lock_guard<std::mutex> lock(g_mutex); g_engine.resize((uint32_t)w,(uint32_t)h);
