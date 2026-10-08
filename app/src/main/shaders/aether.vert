@@ -14,6 +14,7 @@ layout(set=0,binding=0,std140) uniform Camera {
  vec4 cameraPosTime;
  vec4 sunDirIntensity;
  vec4 skyParams;
+ vec4 gridParams;
 } camera;
 layout(push_constant) uniform RenderMode { uint mode; } renderMode;
 void main(){
