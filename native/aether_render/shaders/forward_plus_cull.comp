@@ -1,0 +1,77 @@
+#version 450
+
+// Aether-3D Forward+ tile-culling ABI.
+// The pass is intentionally isolated from Android surface/swapchain code.
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+struct PointLight {
+    vec4 positionRadius;
+    vec4 colorIntensity;
+};
+
+layout(set = 0, binding = 0, std430) readonly buffer LightBuffer {
+    PointLight lights[];
+};
+
+layout(set = 0, binding = 1, std430) writeonly buffer LightIndexBuffer {
+    uint indices[];
+};
+
+layout(set = 0, binding = 2, std430) buffer TileHeaderBuffer {
+    uvec2 headers[];
+};
+
+layout(set = 0, binding = 3) uniform sampler2D depthTexture;
+
+layout(push_constant) uniform ForwardPlusConstants {
+    mat4 inverseProjection;
+    uint screenWidth;
+    uint screenHeight;
+    uint lightCount;
+    uint maxLightsPerTile;
+} constants;
+
+shared uint tileMinDepthBits;
+shared uint tileMaxDepthBits;
+
+void main() {
+    const uvec2 pixel = gl_GlobalInvocationID.xy;
+    const uint tilesX = (constants.screenWidth + 15u) / 16u;
+
+    if (gl_LocalInvocationIndex == 0u) {
+        tileMinDepthBits = floatBitsToUint(1.0);
+        tileMaxDepthBits = floatBitsToUint(0.0);
+    }
+
+    barrier();
+
+    if (pixel.x < constants.screenWidth && pixel.y < constants.screenHeight) {
+        const vec2 uv = (vec2(pixel) + 0.5) /
+                        vec2(constants.screenWidth, constants.screenHeight);
+        const float depth = textureLod(depthTexture, uv, 0.0).r;
+        atomicMin(tileMinDepthBits, floatBitsToUint(depth));
+        atomicMax(tileMaxDepthBits, floatBitsToUint(depth));
+    }
+
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0u) {
+        const uint tileX = gl_WorkGroupID.x;
+        const uint tileY = gl_WorkGroupID.y;
+        const uint tileIndex = tileY * tilesX + tileX;
+
+        // Header ABI: x = global index-list base, y = number of lights.
+        // The production pass replaces this bounded placeholder with the
+        // four tile-frustum plane tests and depth-range test.
+        headers[tileIndex] = uvec2(tileIndex * constants.maxLightsPerTile, 0u);
+
+        // Keep the reduction result observable while the full intersection
+        // kernel is added.
+        const float minDepth = uintBitsToFloat(tileMinDepthBits);
+        const float maxDepth = uintBitsToFloat(tileMaxDepthBits);
+        if (minDepth > maxDepth) {
+            headers[tileIndex].y = 0u;
+        }
+    }
+}
