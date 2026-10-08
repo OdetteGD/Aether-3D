@@ -56,6 +56,7 @@ private:
     VkDeviceMemory depth_memory_{VK_NULL_HANDLE};
     VkImageView depth_view_{VK_NULL_HANDLE};
     VkFormat depth_format_{VK_FORMAT_D32_SFLOAT};
+    VkFormat shadow_format_{VK_FORMAT_D16_UNORM};
     VkCommandPool command_pool_{VK_NULL_HANDLE};
     VkCommandBuffer command_buffer_{VK_NULL_HANDLE};
     VkSemaphore image_available_{VK_NULL_HANDLE};
@@ -92,7 +93,7 @@ private:
     void* cluster_mapped_{};
     uint32_t index_count_{0};
     uint32_t width_{1},height_{1};
-    float yaw_{0.0f}, pitch_{0.20f}, distance_{6.0f};
+    float yaw_{0.0f}, pitch_{0.16f}, distance_{9.5f};
     float last_x_{0.0f}, last_y_{0.0f};
     float time_{0.0f};
     bool touching_{false};
