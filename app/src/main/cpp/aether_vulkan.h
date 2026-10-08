@@ -19,7 +19,7 @@ private:
         float light_view_proj[16]; float camera_pos_time[4]; float sun_dir_intensity[4]; float sky_params[4]; float grid_params[4];
     };
     struct Light { float position_radius[4]; float color_intensity[4]; };
-    struct LightData { Light lights[128]; };
+    struct LightData { Light lights[1024]; };
     bool init();
     void shutdown();
     bool create_instance();
@@ -104,7 +104,7 @@ private:
     float yaw_{0.0f}, pitch_{0.16f}, distance_{9.5f};
     float last_x_{0.0f}, last_y_{0.0f};
     float time_{0.0f};
-    uint32_t light_count_{128};
+    uint32_t light_count_{1024};
     bool touching_{false};
     bool initialized_{false};
     bool dirty_{true};
