@@ -43,7 +43,8 @@ bool VulkanRenderer::create_mesh(){
   const float n[6][3]={{0,0,-1},{0,0,1},{-1,0,0},{1,0,0},{0,-1,0},{0,1,0}};
   const int f[6][4]={{0,1,2,3},{4,6,5,7},{0,3,7,4},{1,5,6,2},{0,4,5,1},{3,2,6,7}};
   for(int q=0;q<6;q++)for(int j=0;j<4;j++){const auto&pp=p[f[q][j]];v.push_back({cx+pp[0],cy+pp[1],cz+pp[2],n[q][0],n[q][1],n[q][2],r,g,b});}
-  for(int q=0;q<6;q++){uint16_t b0=base+q*4;ix.insert(ix.end(),{(uint16_t)(b0+0),(uint16_t)(b0+1),(uint16_t)(b0+2),(uint16_t)(b0+2),(uint16_t)(b0+3),(uint16_t)(b0+0)});}
+  const int order[6][6]={{0,3,2,2,1,0},{4,5,6,6,7,4},{0,4,7,7,3,0},{1,2,6,6,5,1},{0,1,5,5,4,0},{3,7,6,6,2,3}};
+  for(int q=0;q<6;q++){uint16_t b0=base+q*4;for(int j=0;j<6;j++)ix.push_back((uint16_t)(b0+order[q][j]));}
  };
  const int N=40;const float S=20.0f;const float step=(2.0f*S)/float(N);
  for(int z=0;z<=N;z++)for(int x=0;x<=N;x++){
@@ -54,7 +55,7 @@ bool VulkanRenderer::create_mesh(){
   float c0=.19f+.035f*std::sin(wx*.11f+wz*.07f),c1=.23f+.025f*std::cos(wx*.09f),c2=.16f+.02f*std::sin(wz*.13f);
   v.push_back({wx,wy,wz,nx,ny,nz,c0,c1,c2});
  }
- for(int z=0;z<N;z++)for(int x=0;x<N;x++){uint16_t i=(uint16_t)(z*(N+1)+x);ix.insert(ix.end(),{i,(uint16_t)(i+1),(uint16_t)(i+N+2),(uint16_t)(i+N+2),(uint16_t)(i+N+1),i});}
+ for(int z=0;z<N;z++)for(int x=0;x<N;x++){uint16_t i=(uint16_t)(z*(N+1)+x);ix.insert(ix.end(),{i,(uint16_t)(i+N+1),(uint16_t)(i+N+2),(uint16_t)(i+N+2),(uint16_t)(i+1),i});}
  auto add_prop=[&](float x,float z,float hx,float hy,float hz,float r,float g,float b){float y=terrain(x,z)+hy;add_box(x,y,z,hx,hy,hz,r,g,b);};
  add_prop(0,0,1.05f,1.05f,1.05f,.34f,.38f,.46f);
  add_prop(-4.6f,-2.0f,.75f,1.45f,.7f,.30f,.34f,.40f);
