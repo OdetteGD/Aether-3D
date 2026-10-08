@@ -31,9 +31,9 @@ jobs:
       - name: Compile Vulkan shaders
         run: |
           mkdir -p app/src/main/shaders
-          glslangValidator -V app/src/main/shaders/aether.vert -o app/src/main/shaders/aether.vert.spv
-          glslangValidator -V app/src/main/shaders/aether.frag -o app/src/main/shaders/aether.frag.spv
-          glslangValidator -V app/src/main/shaders/aether.comp -o app/src/main/shaders/aether.comp.spv
+          glslangValidator -V --target-env vulkan1.1 app/src/main/shaders/aether.vert -o app/src/main/shaders/aether.vert.spv
+          glslangValidator -V --target-env vulkan1.1 app/src/main/shaders/aether.frag -o app/src/main/shaders/aether.frag.spv
+          glslangValidator -V --target-env vulkan1.1 app/src/main/shaders/aether.comp -o app/src/main/shaders/aether.comp.spv
           python3 tools/generate_spirv_header.py
           test -f app/src/main/cpp/generated/shaders_spv.h && wc -c app/src/main/cpp/generated/shaders_spv.h
       - name: Gradle
