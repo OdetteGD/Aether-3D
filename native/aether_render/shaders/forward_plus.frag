@@ -45,5 +45,4 @@ void main() {
     }
 
     outColor = vec4(lighting, 1.0);
-    (void)uv;
 }
